@@ -7,8 +7,16 @@ from cryptography.hazmat.primitives.serialization import load_pem_private_key
 
 filenamePrivateKey = 'privatekey.txt'
 
+
+class Portefeuille:
+    def __init__(self):
+        self.private_key = load_private_key(filenamePrivateKey)
+        self.public_key = load_public_key()
+        self.balance = 0
+
+
 def preuve_de_travail(Block):
-    PreuveString = "{}{}{}{}".format(Block.HashsetPrecedent, "".join(Block.Data), str(Block.Date), str(Block.NbAleatoire))
+    PreuveString = "{}{}{}{}".format(Block.hashset_precedent, "".join(Block.data), str(Block.date), str(Block.nb_aleatoire))
     hashValide = False
     cpt = 0
     debutValide = "00000"
@@ -37,13 +45,13 @@ def gen_private_key():
     return private_key
 
 
-def load_public_key(Block):
-    privateKey = Block.load_private_key(Block, filenamePrivateKey)
-    public_key = privateKey.public_key()
-    pubKey = public_key.public_bytes(
+def load_public_key():
+    private_key = load_private_key(filenamePrivateKey)
+    public_key = private_key.public_key()
+    pub_key = public_key.public_bytes(
         encoding=serialization.Encoding.PEM,
         format=serialization.PublicFormat.SubjectPublicKeyInfo)
-    return pubKey
+    return pub_key
 
 
 def afficher_public_key(key):

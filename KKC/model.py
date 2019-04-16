@@ -1,5 +1,6 @@
 from KKC.action import preuve_de_travail
 from KKC.core import db
+from KKC.action import load_private_key, load_public_key, filenamePrivateKey
 
 import random
 import datetime
@@ -7,17 +8,21 @@ import datetime
 
 class Block(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    hashPrecedent = db.Column(db.String(100), unique=True, nullable=False)
+    hash_precedent = db.Column(db.String(100), unique=True, nullable=False)
     data = db.Column(db.String(100), unique=False, nullable=False)
-    nbPreuve = db.Column(db.Integer, unique=False, nullable=False)
-    nbAleatoire = db.Column(db.Integer, unique=False, nullable=False)
+    nb_preuve = db.Column(db.Integer, unique=False, nullable=False)
+    nb_aleatoire = db.Column(db.Integer, unique=False, nullable=False)
     date = db.Column(db.DateTime, unique=False, nullable=False)
-    hashPreuve = db.Column(db.String(100), unique=False, nullable=False)
+    hash_preuve = db.Column(db.String(100), unique=False, nullable=False)
 
-    def __init__(self, hashsetPrecedent, data):
-        self.HashsetPrecedent = hashsetPrecedent
-        self.Data = data
-        self.NbPreuves = 0
-        self.NbAleatoire = random.randint(1, 1000000)
-        self.Date = datetime.time
-        self.HashPreuve = preuve_de_travail(self)
+    def __init__(self, p_hashset_precedent, p_data):
+        self.hashset_precedent = p_hashset_precedent
+        self.data = p_data
+        self.nb_preuves = 0
+        self.nb_aleatoire = random.randint(1, 255)
+        self.date = datetime.time
+        self.hash_preuve = preuve_de_travail(self)
+        self.nb_iterations = 1
+
+
+
