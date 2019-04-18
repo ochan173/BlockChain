@@ -17,14 +17,14 @@ class Portefeuille:
 
 def preuve_de_travail(Block):
     PreuveString = "{}{}{}{}".format(Block.hashset_precedent, "".join(Block.data), str(Block.date), str(Block.nb_aleatoire))
-    hashValide = False
+    HashValide = False
     cpt = 0
-    debutValide = "00000"
+    DebutValide = "00000"
     HashPreuve = hashlib.sha256(PreuveString.encode()).hexdigest()
 
-    while not hashValide:
-        if (debutValide == HashPreuve[:5]):
-            hashValide = True
+    while not HashValide:
+        if (DebutValide == HashPreuve[:5]):
+            HashValide = True
         else:
             cpt += 1
             HashPreuve = hashlib.sha256(HashPreuve.encode()).hexdigest()
