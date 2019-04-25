@@ -6,6 +6,9 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
 from flask import session
 
+portefeuille = Portefeuille()
+
+
 def encode_key(key):
     return key.private_bytes(
             encoding=serialization.Encoding.PEM,
@@ -13,18 +16,25 @@ def encode_key(key):
             encryption_algorithm=serialization.NoEncryption()
         )
 
+
 @app.route("/status")
-def afficherKey():
+def afficher_key():
     priv_key = session["rsa"]
     pk = load_pem_private_key(priv_key, None, default_backend())
     pub_key = pk.public_key()
     return afficher_public_key(pub_key)
 
+
 @app.route("/load")
-def loadKey():
-    portefeuille = Portefeuille()
+def load_key():
     session['rsa'] = encode_key(portefeuille.private_key)
     return "Clé chargée"
+
+
+@app.route("/solde")
+def show_balance():
+    return "Balance portefeuille : " + str(portefeuille.balance) + " KKC"
+
 
 @app.route("/")
 def hello():

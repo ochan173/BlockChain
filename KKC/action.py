@@ -16,6 +16,7 @@ class Portefeuille:
 
 
 def preuve_de_travail(Block):
+
     PreuveString = "{}{}{}{}".format(Block.hashset_precedent, "".join(Block.data), str(Block.date), str(Block.nb_aleatoire))
     HashValide = False
     cpt = 0
