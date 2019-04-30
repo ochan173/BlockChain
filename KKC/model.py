@@ -59,7 +59,7 @@ class Transaction(db.Model):
     __tablename__ = 'transaction'
     id = db.Column(db.Integer, primary_key=True)
     block_id = db.Column(db.Integer, ForeignKey('block.id'))
-    block = relationship("Block", back_populates="Transaction")
+    block = relationship("Block", back_populates="data")
     expediteur = db.Column(db.String(100), unique=False, nullable=False)
     receveur = db.Column(db.String(100), unique=False, nullable=False)
     montant = db.Column(db.Integer, unique=False, nullable=False)
