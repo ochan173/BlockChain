@@ -8,11 +8,7 @@ from cryptography.hazmat.primitives.serialization import load_pem_private_key
 filenamePrivateKey = 'privatekey.txt'
 
 
-class Portefeuille:
-    def __init__(self):
-        self.private_key = load_private_key(filenamePrivateKey)
-        self.public_key = load_public_key()
-        self.balance = 0
+
 
 
 def preuve_de_travail(Block):

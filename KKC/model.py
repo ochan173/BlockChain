@@ -3,7 +3,7 @@ import hashlib
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 
-from KKC.action import preuve_de_travail, load_private_key, filenamePrivateKey, hash_message
+from KKC.action import preuve_de_travail, load_private_key, filenamePrivateKey, hash_message, load_public_key
 from KKC.core import db
 from enum import Enum
 from cryptography.hazmat.primitives import serialization, hashes
@@ -34,6 +34,7 @@ class Block(db.Model):
     __tablename__ = 'block'
     id = db.Column(db.Integer, primary_key=True)
     data = relationship("Transaction", back_populates='block')
+    contributeurs = relationship("Contributeur", back_populates='block')
     hash_precedent = db.Column(db.String(100), unique=True, nullable=False)
     #data = db.Column(db.String(100), unique=False, nullable=False)
     nb_preuve = db.Column(db.Integer, unique=False, nullable=False)
@@ -58,7 +59,7 @@ class Block(db.Model):
 class Transaction(db.Model):
     __tablename__ = 'transaction'
     id = db.Column(db.Integer, primary_key=True)
-    block_id = db.Column(db.Integer, ForeignKey('block.id'))
+    block_id = db.Column(db.Integer, ForeignKey('block.id'), nullable=True)
     block = relationship("Block", back_populates="data")
     expediteur = db.Column(db.String(100), unique=False, nullable=False)
     receveur = db.Column(db.String(100), unique=False, nullable=False)
@@ -89,6 +90,21 @@ class Transaction(db.Model):
         return signature
 
 
+class Portefeuille:
+    def __init__(self):
+        self.private_key = load_private_key(filenamePrivateKey)
+        self.public_key = load_public_key()
+        self.balance = 0
+
+
 class Contributeur(db.Model):
-    __tablename__ = 'cintributeur'
+    __tablename__ = 'contributeur'
     id = db.Column(db.Integer, primary_key=True)
+    cle_publique = db.Column(db.String(100), unique=False, nullable=False)
+    hash = db.Column(db.String(100), unique=False, nullable=False)
+    block_id = db.Column(db.Integer, ForeignKey('block.id'), nullable=True)
+    block = relationship("Block", back_populates="contributeurs")
+
+    def __init__(self, cle, hash):
+        self.cle_publique = cle
+        self.hash = hash
