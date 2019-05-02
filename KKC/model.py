@@ -89,6 +89,10 @@ class Transaction(db.Model):
             hashes.SHA256())
         return signature
 
+    def creer_transaction(self, receveur, montant):
+        transaction = Transaction()
+
+
 
 class Portefeuille:
     def __init__(self):

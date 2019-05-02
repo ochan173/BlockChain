@@ -1,11 +1,12 @@
 from KKC.core import app
 from KKC.action import load_private_key, filenamePrivateKey, afficher_public_key
-from KKC.model import Portefeuille
+from KKC.model import Portefeuille, Transaction
+from KKC.templates.forms import TransactionForm
 
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
-from flask import session, render_template
+from flask import session, render_template, request, flash, redirect
 
 portefeuille = Portefeuille()
 
@@ -37,9 +38,14 @@ def show_balance():
     return "Balance portefeuille : " + str(portefeuille.balance) + " KKC"
 
 
-@app.route("/transaction")
+@app.route("/transaction", methods=["POST", "GET"])
 def transferer():
-    return render_template("test.html")
+    form = TransactionForm()
+    if request.method == 'POST':
+
+        Transaction.creer_transaction(Transaction.self, form.destinataire, form.montant)
+        return redirect('/')
+    return render_template("transaction.html", title='Nouvelle transaction', form=form)
 
 
 @app.route("/")
