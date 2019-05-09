@@ -1,8 +1,24 @@
 import urllib.request, json
 import numpy
 from collections import namedtuple
-with urllib.request.urlopen("https://test.fanslab.io/blockchain") as url:
-    data = json.loads(url.read().decode())
-    print(data["KKC"][0])
-    # for b in data["KKC"]:
-    #     print(b["hash"])
+
+
+def _json_object_hook(d): return namedtuple('X', d.keys())(*d.values())
+
+
+def json2obj(data): return json.loads(data, object_hook=_json_object_hook)
+
+
+def get_data():
+    with urllib.request.urlopen("https://test.fanslab.io/blockchain") as url:
+        data = json.loads(url.read().decode())
+
+        #print(type(data["KKC"]))
+
+        for k in data["KKC"]:
+            print(type(k["validators"]))
+        # for b in x["KKC"]:
+
+
+
+get_data()

@@ -8,6 +8,7 @@ from KKC.core import db
 from enum import Enum
 from cryptography.hazmat.primitives import serialization, hashes
 from cryptography.hazmat.primitives.asymmetric import padding
+from collections import namedtuple
 import binascii
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
@@ -42,7 +43,7 @@ class Block(db.Model):
     nb_aleatoire = db.Column(db.Integer, unique=False, nullable=False)
     date = db.Column(db.DateTime, unique=False, nullable=False)
     hash_preuve = db.Column(db.String(100), unique=False, nullable=False)
-    adressePremierConfirmateur = db.Column(db.String(100), unique=False, nullable=False)
+    adressePremierConfirmateur = db.Column(db.String(500), unique=False, nullable=False)
     hashBlock = db.Column(db.String(100), unique=False, nullable=False)
 
     # def __init__(self, p_hashset_precedent, p_data):
@@ -70,12 +71,21 @@ class Block(db.Model):
         self.contributeurs = p_contributeurs
 
 
+def _json_object_hook(d): return namedtuple('X', d.keys())(*d.values())
+
+
+def json2obj(data): return json.loads(data, object_hook=_json_object_hook)
+
+
 def get_data():
     with urllib.request.urlopen("https://test.fanslab.io/blockchain") as url:
         data = json.loads(url.read().decode())
+        list_blocks = []
         for b in data["KKC"]:
-            db.session.add(Block(b["previous_hash"], b["datas"], b["proof_number"], b["random_number"], b["timestamp"],
-                b["hash_proof"], b["state"], b["proof_finder_identity"], b["hash"], b["validators"]))
+            block = Block(b["previous_hash"], b["datas"], int(b["proof_number"]), b["random_number"],
+                b["timestamp"], b["hash_proof"], b["state"], b["proof_finder_identity"], b["hash"], b["validators"])
+            list_blocks.add(block)
+    return list_blocks
 
 
 class Transaction(db.Model):
