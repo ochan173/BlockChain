@@ -53,5 +53,6 @@ def hello():
     html = "<h1>Bonjour</h1>" + "<li> <a href='/solde'>Charger le solde</a></li>" \
                                 "<li> <a href='/load'>Charger la clé</a></li>"\
                                 "<li> <a href='/status'>Afficher la clé publique (préalablement chargée)</a></li>"\
-                                "<li> <a href='/transaction'>Transaction</a></li>"
+                                "<li> <a href='/transaction'>Transaction</a></li>"\
+                                "<li> <a href='/admin'>Admin</a></li>"
     return html

@@ -1,4 +1,4 @@
-from KKC.action import Portefeuille
+from KKC.model import Portefeuille
 
 portefeuille = Portefeuille()
 print(portefeuille.balance)

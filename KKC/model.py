@@ -13,6 +13,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
+import urllib.request, json
 
 import random
 from datetime import datetime
@@ -44,16 +45,37 @@ class Block(db.Model):
     adressePremierConfirmateur = db.Column(db.String(100), unique=False, nullable=False)
     hashBlock = db.Column(db.String(100), unique=False, nullable=False)
 
-    def __init__(self, p_hashset_precedent, p_data):
+    # def __init__(self, p_hashset_precedent, p_data):
+    #     self.hashset_precedent = p_hashset_precedent
+    #     self.data = p_data
+    #     self.nb_preuves = 0
+    #     self.nb_aleatoire = random.randint(1, 255)
+    #     self.date = datetime
+    #     self.hash_preuve = preuve_de_travail(self)
+    #     self.etat = EtatBlock.NOUVEAU
+    #     self.adressePremierConfirmateur = ""
+    #     self.hashBlock = ""
+
+    def __init__(self, p_hashset_precedent, p_data, p_nb_preuves, p_nb_aleatoire, p_date, p_hash_preuve, p_etat
+                 , p_premier_confirmateur, p_hash_block, p_contributeurs):
         self.hashset_precedent = p_hashset_precedent
         self.data = p_data
-        self.nb_preuves = 0
-        self.nb_aleatoire = random.randint(1, 255)
-        self.date = datetime
-        self.hash_preuve = preuve_de_travail(self)
-        self.etat = EtatBlock.NOUVEAU
-        self.adressePremierConfirmateur = ""
-        self.hashBlock = ""
+        self.nb_preuves = p_nb_preuves
+        self.nb_aleatoire = p_nb_aleatoire
+        self.date = p_date
+        self.hash_preuve = p_hash_preuve
+        self.etat = p_etat
+        self.adressePremierConfirmateur = p_premier_confirmateur
+        self.hashBlock = p_hash_block
+        self.contributeurs = p_contributeurs
+
+
+def get_data():
+    with urllib.request.urlopen("https://test.fanslab.io/blockchain") as url:
+        data = json.loads(url.read().decode())
+        for b in data["KKC"]:
+            db.session.add(Block(b["previous_hash"], b["datas"], b["proof_number"], b["random_number"], b["timestamp"],
+                b["hash_proof"], b["state"], b["proof_finder_identity"], b["hash"], b["validators"]))
 
 
 class Transaction(db.Model):
@@ -88,10 +110,6 @@ class Transaction(db.Model):
                 salt_length=padding.PSS.MAX_LENGTH),
             hashes.SHA256())
         return signature
-
-    def creer_transaction(self, receveur, montant):
-        transaction = Transaction()
-
 
 
 class Portefeuille:

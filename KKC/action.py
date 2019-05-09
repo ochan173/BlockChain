@@ -5,10 +5,11 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
 
+import urllib.request, json
+
+#from KKC.model import Block
+
 filenamePrivateKey = 'privatekey.txt'
-
-
-
 
 
 def preuve_de_travail(Block):
@@ -72,5 +73,7 @@ def load_private_key(filename):
         pemlines = pem_in.read()
     private_key = load_pem_private_key(pemlines, None, default_backend())
     return private_key
+
+
 
 
