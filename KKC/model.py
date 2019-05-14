@@ -56,16 +56,15 @@ def get_data():
             block = Block(b["previous_hash"], b["proof_number"], int(b["random_number"]),
                 b["timestamp"], b["hash_proof"], b["state"], b["proof_finder_identity"], b["hash"])
 
-            if (b["state"] == "OK"):
+            if b["state"] == "OK":
                 db.session.add(block)
 
                 for t in b["datas"]:
                     trans = Transaction(t["sender_address"], t["receiver_address"], t["amount"], t["signature"], block.id, block)
+                    db.session.add(trans)
                 for c in b["validators"]:
                     contributeur = Contributeur(c["proof_finder_identity"], c["hash"], block.id, block)
                     db.session.add(contributeur)
-
-
 
 
 class Transaction(db.Model):
