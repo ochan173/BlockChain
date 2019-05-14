@@ -3,22 +3,13 @@ import hashlib
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 
-from KKC.action import preuve_de_travail, load_private_key, filenamePrivateKey, hash_message, load_public_key
+from KKC.action import load_private_key, filenamePrivateKey, hash_message, load_public_key
 from KKC.core import db
 from enum import Enum
-from cryptography.hazmat.primitives import serialization, hashes
+from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding
-from collections import namedtuple
-import binascii
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import rsa
 
 import urllib.request, json
-
-import random
-from datetime import datetime
-
 
 class EtatBlock(Enum):
     NOUVEAU = 1
@@ -42,38 +33,25 @@ class Block(db.Model):
     nb_aleatoire = db.Column(db.Integer, unique=False, nullable=False)
     date = db.Column(db.String(30), unique=False, nullable=False)
     hash_preuve = db.Column(db.String(100), unique=False, nullable=False)
-    adressePremierConfirmateur = db.Column(db.String(500), unique=False, nullable=True)
+    premier_confirmateur = db.Column(db.String(500), unique=False, nullable=True)
     hashBlock = db.Column(db.String(100), unique=False, nullable=True)
-
-    # def __init__(self, p_hashset_precedent, p_data):
-    #     self.hashset_precedent = p_hashset_precedent
-    #     self.data = p_data
-    #     self.nb_preuves = 0
-    #     self.nb_aleatoire = random.randint(1, 255)
-    #     self.date = datetime
-    #     self.hash_preuve = preuve_de_travail(self)
-    #     self.etat = EtatBlock.NOUVEAU
-    #     self.adressePremierConfirmateur = ""
-    #     self.hashBlock = ""
 
     def __init__(self, p_hashset_precedent, p_nb_preuves, p_nb_aleatoire, p_date, p_hash_preuve, p_etat
                  , p_premier_confirmateur, p_hash_block):
         self.hashset_precedent = p_hashset_precedent
-        #self.data = p_data
         self.nb_preuves = p_nb_preuves
         self.nb_aleatoire = p_nb_aleatoire
         self.date = p_date
         self.hash_preuve = p_hash_preuve
         self.etat = p_etat
-        self.adressePremierConfirmateur = p_premier_confirmateur
+        self.premier_confirmateur = p_premier_confirmateur
         self.hashBlock = p_hash_block
-        #self.contributeurs = p_contributeurs
 
 
 def get_data():
     with urllib.request.urlopen("https://test.fanslab.io/blockchain") as url:
         data = json.loads(url.read().decode())
-        cpt = 0
+
         for b in data["KKC"]:
             block = Block(b["previous_hash"], b["proof_number"], int(b["random_number"]),
                 b["timestamp"], b["hash_proof"], b["state"], b["proof_finder_identity"], b["hash"])
@@ -82,13 +60,11 @@ def get_data():
                 db.session.add(block)
 
                 for t in b["datas"]:
-                    trans = Transaction(t["sender_address"], t["receiver_address"], t["amount"], t["signature"], cpt)
-                    db.session.add(trans)
-
+                    trans = Transaction(t["sender_address"], t["receiver_address"], t["amount"], t["signature"], block.id, block)
                 for c in b["validators"]:
-                    contributeur = Contributeur(c["proof_finder_identity"], c["hash"], cpt)
+                    contributeur = Contributeur(c["proof_finder_identity"], c["hash"], block.id, block)
                     db.session.add(contributeur)
-            cpt = cpt + 1
+
 
 
 
@@ -102,12 +78,13 @@ class Transaction(db.Model):
     montant = db.Column(db.Integer, unique=False, nullable=False)
     signature = db.Column(db.String(100), unique=False, nullable=False)
 
-    def __init__(self, expediteur, receveur, montant, signature, id):
+    def __init__(self, expediteur, receveur, montant, signature, id, block):
         self.expediteur = expediteur
         self.receveur = receveur
         self.montant = montant
         self.signature = signature
         self.block_id = id
+        self.block = block
 
     def sign_transaction(self):
         """
@@ -116,7 +93,6 @@ class Transaction(db.Model):
         private_key = load_private_key(filenamePrivateKey)
         message = (str(self.expediteur) + str(self.receveur) + str(self.montant))
         message = hash_message(message)
-        #message = hashlib.sha256(message).hexdigest()
 
         signature = private_key.sign(
             message, padding.PSS(
@@ -141,7 +117,8 @@ class Contributeur(db.Model):
     block_id = db.Column(db.Integer, ForeignKey('block.id'), nullable=True)
     block = relationship("Block", back_populates="contributeurs")
 
-    def __init__(self, cle, hash, id):
+    def __init__(self, cle, hash, id, block):
         self.cle_publique = cle
         self.hash = hash
         self.block_id = id
+        self.block = block
