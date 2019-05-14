@@ -27,12 +27,6 @@ def afficher_key():
     return afficher_public_key(pub_key)
 
 
-@app.route("/load")
-def load_key():
-    session['rsa'] = encode_key(portefeuille.private_key)
-    return "Clé chargée"
-
-
 @app.route("/solde")
 def show_balance():
     return "Balance portefeuille : " + str(portefeuille.balance) + " KKC"
@@ -50,9 +44,9 @@ def transferer():
 
 @app.route("/")
 def hello():
+    session['rsa'] = encode_key(portefeuille.private_key)
     html = "<h1>Bonjour</h1>" + "<li> <a href='/solde'>Charger le solde</a></li>" \
-                                "<li> <a href='/load'>Charger la clé</a></li>"\
-                                "<li> <a href='/status'>Afficher la clé publique (préalablement chargée)</a></li>"\
+                                "<li> <a href='/status'>Afficher la clé publique</a></li>"\
                                 "<li> <a href='/transaction'>Transaction</a></li>"\
                                 "<li> <a href='/admin'>Admin</a></li>"
     return html

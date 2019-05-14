@@ -37,14 +37,13 @@ class Block(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     data = relationship("Transaction", back_populates='block')
     contributeurs = relationship("Contributeur", back_populates='block')
-    hash_precedent = db.Column(db.String(100), unique=True, nullable=False)
-    #data = db.Column(db.String(100), unique=False, nullable=False)
-    nb_preuve = db.Column(db.Integer, unique=False, nullable=False)
+    hash_precedent = db.Column(db.String(100), unique=True, nullable=True)
+    nb_preuve = db.Column(db.String(10), unique=False, nullable=True)
     nb_aleatoire = db.Column(db.Integer, unique=False, nullable=False)
-    date = db.Column(db.DateTime, unique=False, nullable=False)
+    date = db.Column(db.String(30), unique=False, nullable=False)
     hash_preuve = db.Column(db.String(100), unique=False, nullable=False)
-    adressePremierConfirmateur = db.Column(db.String(500), unique=False, nullable=False)
-    hashBlock = db.Column(db.String(100), unique=False, nullable=False)
+    adressePremierConfirmateur = db.Column(db.String(500), unique=False, nullable=True)
+    hashBlock = db.Column(db.String(100), unique=False, nullable=True)
 
     # def __init__(self, p_hashset_precedent, p_data):
     #     self.hashset_precedent = p_hashset_precedent
@@ -57,10 +56,10 @@ class Block(db.Model):
     #     self.adressePremierConfirmateur = ""
     #     self.hashBlock = ""
 
-    def __init__(self, p_hashset_precedent, p_data, p_nb_preuves, p_nb_aleatoire, p_date, p_hash_preuve, p_etat
-                 , p_premier_confirmateur, p_hash_block, p_contributeurs):
+    def __init__(self, p_hashset_precedent, p_nb_preuves, p_nb_aleatoire, p_date, p_hash_preuve, p_etat
+                 , p_premier_confirmateur, p_hash_block):
         self.hashset_precedent = p_hashset_precedent
-        self.data = p_data
+        #self.data = p_data
         self.nb_preuves = p_nb_preuves
         self.nb_aleatoire = p_nb_aleatoire
         self.date = p_date
@@ -68,24 +67,29 @@ class Block(db.Model):
         self.etat = p_etat
         self.adressePremierConfirmateur = p_premier_confirmateur
         self.hashBlock = p_hash_block
-        self.contributeurs = p_contributeurs
-
-
-def _json_object_hook(d): return namedtuple('X', d.keys())(*d.values())
-
-
-def json2obj(data): return json.loads(data, object_hook=_json_object_hook)
+        #self.contributeurs = p_contributeurs
 
 
 def get_data():
     with urllib.request.urlopen("https://test.fanslab.io/blockchain") as url:
         data = json.loads(url.read().decode())
-        list_blocks = []
+        cpt = 0
         for b in data["KKC"]:
-            block = Block(b["previous_hash"], b["datas"], int(b["proof_number"]), b["random_number"],
-                b["timestamp"], b["hash_proof"], b["state"], b["proof_finder_identity"], b["hash"], b["validators"])
-            list_blocks.add(block)
-    return list_blocks
+            block = Block(b["previous_hash"], b["proof_number"], int(b["random_number"]),
+                b["timestamp"], b["hash_proof"], b["state"], b["proof_finder_identity"], b["hash"])
+
+            if (b["state"] == "OK"):
+                db.session.add(block)
+
+                for t in b["datas"]:
+                    trans = Transaction(t["sender_address"], t["receiver_address"], t["amount"], t["signature"], cpt)
+                    db.session.add(trans)
+
+                for c in b["validators"]:
+                    contributeur = Contributeur(c["proof_finder_identity"], c["hash"], cpt)
+                    db.session.add(contributeur)
+            cpt = cpt + 1
+
 
 
 class Transaction(db.Model):
@@ -98,12 +102,12 @@ class Transaction(db.Model):
     montant = db.Column(db.Integer, unique=False, nullable=False)
     signature = db.Column(db.String(100), unique=False, nullable=False)
 
-    def __init__(self, expediteur, receveur, montant, signature, etat):
+    def __init__(self, expediteur, receveur, montant, signature, id):
         self.expediteur = expediteur
         self.receveur = receveur
         self.montant = montant
         self.signature = signature
-        self.etat = etat
+        self.block_id = id
 
     def sign_transaction(self):
         """
@@ -137,6 +141,7 @@ class Contributeur(db.Model):
     block_id = db.Column(db.Integer, ForeignKey('block.id'), nullable=True)
     block = relationship("Block", back_populates="contributeurs")
 
-    def __init__(self, cle, hash):
+    def __init__(self, cle, hash, id):
         self.cle_publique = cle
         self.hash = hash
+        self.block_id = id
